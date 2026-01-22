@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-cc-stt = "cc_stt:main"
+cc-stt = "cc_stt:cli"
 
 [dependency-groups]
 dev = ["pytest>=7.0.0"]
