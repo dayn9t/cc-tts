@@ -1,10 +1,10 @@
 from mcp.server import Server
 from mcp.types import Tool, TextContent, ErrorData
 import mcp.server.stdio
-from .recorder import AudioRecorder
-from .transcriber import SpeechTranscriber
-from .hotwords import HotwordsManager
-from .config import Config
+from cc_stt.recorder import AudioRecorder
+from cc_stt.transcriber import SpeechTranscriber
+from cc_stt.hotwords import HotwordsManager
+from cc_stt.config import Config
 
 # Initialize components
 config = Config.load()
