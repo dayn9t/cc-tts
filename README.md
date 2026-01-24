@@ -1,73 +1,50 @@
-# cc-stt - Claude Code Speech-to-Text
+# cc-stt
 
-Voice input tool for Claude Code using FunASR.
+Claude Code 语音输入工具，基于 FunASR。
 
-## Features
-
-- MCP Server integration with Claude Code
-- Real-time microphone recording with VAD silence detection
-- FunASR Paraformer-zh model for Chinese speech recognition
-- Configurable hotwords for technical terms
-- Push-to-talk recording mode
-
-## Installation
+## 安装
 
 ```bash
 uv sync
 ```
 
-## Configuration
+## 配置 Claude Code
 
-Add to `~/.claude/settings.json`:
+编辑 `~/.claude/settings.json`：
 
 ```json
 {
   "mcpServers": {
     "cc-stt": {
       "command": "uv",
-      "args": [
-        "--directory",
-        "/path/to/cc-stt",
-        "run",
-        "cc-stt"
-      ]
+      "args": ["--directory", "/path/to/cc-stt", "run", "cc-stt"]
     }
   }
 }
 ```
 
-## Usage
-
-The MCP server provides two tools:
+## MCP 工具
 
 ### transcribe
 
-Record audio and convert to text.
+录音并转文字。
 
-Parameters:
-- `max_duration` (optional): Maximum recording duration in seconds (default: 30)
+- `max_duration`: 最大录音时长（秒），默认 30
 
 ### configure_hotwords
 
-Update hotwords configuration.
+更新热词配置。
 
-Parameters:
-- `hotwords`: Array of hotword strings
-- `mode` (optional): "replace" or "append" (default: "append")
+- `hotwords`: 热词数组
+- `mode`: `replace` 或 `append`（默认）
 
-## Configuration Files
+## 配置文件
 
-- `~/.config/cc-stt/config.json` - Main configuration
-- `~/.config/cc-stt/hotwords.txt` - Hotwords list
+- `~/.config/cc-stt/config.json` - 主配置
+- `~/.config/cc-stt/hotwords.txt` - 热词列表
 
-## Development
-
-Run tests:
+## 测试
 
 ```bash
 uv run pytest tests/ -v
 ```
-
-## License
-
-MIT

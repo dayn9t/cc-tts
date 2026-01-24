@@ -1,7 +1,7 @@
 [project]
 name = "cc-stt"
 version = "0.1.0"
-description = "Add your description here"
+description = "Voice input tool for Claude Code using FunASR"
 readme = "README.md"
 authors = [
     { name = "dayn9t", email = "dayn9t@gmail.com" }
@@ -13,11 +13,6 @@ dependencies = [
     "sounddevice>=0.4.6",
     "numpy>=1.24.0",
     "modelscope>=1.9.0",
-    "numba>=0.57.0",
-    "umap-learn>=0.5.4",
-    "torch>=2.0.0",
-    "torchaudio>=2.0.0",
-    "typer>=0.21.1",
 ]
 
 [project.scripts]

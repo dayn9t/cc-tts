@@ -14,44 +14,25 @@ class HotwordsManager:
         self.load()
 
     def load(self) -> list[str]:
-        """Load hotwords from file, create default if not exists"""
         if not self.config_path.exists():
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
             self._write_default()
 
-        self.hotwords = []
-        with open(self.config_path) as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    self.hotwords.append(line)
-
+        self.hotwords = [
+            line.strip() for line in self.config_path.read_text().splitlines()
+            if line.strip() and not line.startswith('#')
+        ]
         return self.hotwords
 
     def _write_default(self):
-        """Write default hotwords to file"""
-        with open(self.config_path, 'w') as f:
-            f.write("# Claude Code related\n")
-            for word in DEFAULT_HOTWORDS[:3]:
-                f.write(f"{word}\n")
-            f.write("\n# Programming languages\n")
-            for word in DEFAULT_HOTWORDS[3:7]:
-                f.write(f"{word}\n")
-            f.write("\n# Common commands\n")
-            for word in DEFAULT_HOTWORDS[7:]:
-                f.write(f"{word}\n")
+        self.config_path.write_text('\n'.join(DEFAULT_HOTWORDS) + '\n')
 
     def save(self, hotwords: list[str], mode: str = "replace"):
-        """Save hotwords to file"""
         if mode == "append":
             self.hotwords.extend(hotwords)
-        else:  # replace
+        else:
             self.hotwords = hotwords
-
-        with open(self.config_path, 'w') as f:
-            for word in self.hotwords:
-                f.write(f"{word}\n")
+        self.config_path.write_text('\n'.join(self.hotwords) + '\n')
 
     def get_hotwords(self) -> list[str]:
-        """Get current hotwords list"""
         return self.hotwords
