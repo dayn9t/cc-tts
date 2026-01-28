@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import sounddevice as sd
 from cc_stt.config import Config
@@ -7,6 +8,11 @@ from cc_stt.transcriber import SpeechTranscriber
 from cc_stt.editor import EditorWindow
 from cc_stt.voice_edit import VoiceEditor
 from cc_stt.sender import Sender
+
+
+def log(msg: str):
+    """无缓冲输出到 stderr"""
+    print(msg, file=sys.stderr, flush=True)
 
 
 class Daemon:
@@ -47,7 +53,7 @@ class Daemon:
     def run(self):
         """主循环"""
         self.running = True
-        print(f"语音助手已启动，唤醒词: {self.wakeword.wakeword}")
+        log(f"语音助手已启动，唤醒词: {self.wakeword.wakeword}")
 
         while self.running:
             try:
@@ -60,7 +66,7 @@ class Daemon:
                 ):
                     sd.sleep(int(3600 * 1000))  # 持续监听
             except sd.CallbackStop:
-                print("检测到唤醒词，开始录音...")
+                log("检测到唤醒词，开始录音...")
 
                 # 录音
                 audio = self.recorder.record(
@@ -74,7 +80,7 @@ class Daemon:
                     text = self.transcriber.transcribe(
                         audio, self.config.audio.sample_rate
                     )
-                    print(f"转写结果: {text}")
+                    log(f"转写结果: {text}")
 
                     if text.strip():
                         self._show_editor(text)
@@ -92,7 +98,7 @@ def main():
         daemon.run()
     except KeyboardInterrupt:
         daemon.stop()
-        print("\n语音助手已停止")
+        log("\n语音助手已停止")
 
 
 if __name__ == "__main__":

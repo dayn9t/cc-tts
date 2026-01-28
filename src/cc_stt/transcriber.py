@@ -1,9 +1,12 @@
+import sys
 import numpy as np
 from funasr import AutoModel
 
 class SpeechTranscriber:
     def __init__(self, model_name: str = "paraformer-zh"):
-        self.model = AutoModel(model=model_name)
+        print("正在加载 FunASR 模型...", file=sys.stderr, flush=True)
+        self.model = AutoModel(model=model_name, disable_update=True)
+        print("FunASR 模型加载完成", file=sys.stderr, flush=True)
         self.hotwords: list[str] = []
 
     def transcribe(self, audio: np.ndarray, sample_rate: int = 16000) -> str:
