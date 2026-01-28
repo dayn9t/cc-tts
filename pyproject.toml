@@ -24,6 +24,7 @@ dependencies = [
 
 [project.scripts]
 cc-stt = "cc_stt:cli"
+cc-stt-daemon = "cc_stt:daemon_cli"
 
 [dependency-groups]
 dev = ["pytest>=7.0.0"]
