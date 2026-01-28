@@ -1,0 +1,18 @@
+[Unit]
+Description=CC-STT Voice Assistant Daemon
+Documentation=https://github.com/dayn9t/cc-stt
+After=network.target sound.target
+
+[Service]
+Type=simple
+ExecStart=/home/jiang/cc/cc-stt/.venv/bin/cc-stt-daemon
+Restart=on-failure
+RestartSec=5
+Environment=DISPLAY=:0
+
+# Audio permissions
+# Ensure user is in 'audio' group
+# $ sudo usermod -a -G audio $USER
+
+[Install]
+WantedBy=default.target
