@@ -18,8 +18,9 @@ dependencies = [
 ]
 
 [tool.uv]
-# openwakeword requires tflite-runtime which doesn't support Python 3.12+
-# Install manually: uv pip install openwakeword --no-deps
+# openwakeword 0.6.0 requires tflite-runtime which doesn't support Python 3.12+
+# Using 0.4.0 which includes ONNX models and works with Python 3.12
+# Install manually: uv pip install openwakeword==0.4.0
 
 [project.scripts]
 cc-stt = "cc_stt:cli"
