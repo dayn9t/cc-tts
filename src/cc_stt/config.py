@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 import json
 
 @dataclass
@@ -15,9 +16,24 @@ class ModelConfig:
     name: str = "paraformer-zh"
 
 @dataclass
+class WakewordConfig:
+    # Backend selection
+    backend: Literal["openwakeword", "wekws"] = "openwakeword"
+
+    # Common settings
+    name: str = "alexa"
+    threshold: float = 0.3
+    gain: float = 2.0
+
+    # WeKWS-specific settings
+    model_path: str | None = None
+    window_size: int = 40
+
+@dataclass
 class Config:
     audio: AudioConfig
     model: ModelConfig
+    wakeword: WakewordConfig
     hotwords_file: str
 
     @classmethod
@@ -28,6 +44,7 @@ class Config:
             config = cls(
                 audio=AudioConfig(),
                 model=ModelConfig(),
+                wakeword=WakewordConfig(),
                 hotwords_file="~/.config/cc-stt/hotwords.txt"
             )
             config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -40,6 +57,14 @@ class Config:
                     "silence_duration": config.audio.silence_duration,
                 },
                 "model": {"name": config.model.name},
+                "wakeword": {
+                    "backend": config.wakeword.backend,
+                    "name": config.wakeword.name,
+                    "threshold": config.wakeword.threshold,
+                    "gain": config.wakeword.gain,
+                    "model_path": config.wakeword.model_path,
+                    "window_size": config.wakeword.window_size,
+                },
                 "hotwords": {"file": config.hotwords_file}
             }, indent=2))
             return config
@@ -48,5 +73,6 @@ class Config:
         return cls(
             audio=AudioConfig(**data.get("audio", {})),
             model=ModelConfig(**data.get("model", {})),
+            wakeword=WakewordConfig(**data.get("wakeword", {})),
             hotwords_file=data.get("hotwords", {}).get("file", "~/.config/cc-stt/hotwords.txt")
         )
