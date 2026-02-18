@@ -42,6 +42,7 @@ class Daemon:
                 name=wakeword_name,
                 threshold=threshold,
             )
+        self.audio_gain = self.config.wakeword.gain
         self.recorder = AudioRecorder(
             sample_rate=self.config.audio.sample_rate,
             channels=self.config.audio.channels
