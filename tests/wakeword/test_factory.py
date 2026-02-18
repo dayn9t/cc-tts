@@ -5,6 +5,7 @@ from unittest.mock import patch, MagicMock
 
 from cc_stt.wakeword.factory import create_wakeword_backend
 from cc_stt.wakeword.openwakeword import OpenWakeWordBackend
+from cc_stt.wakeword.sherpa_onnx import SherpaONNXBackend
 from cc_stt.wakeword.wekws import WeKWSBackend
 
 
@@ -68,4 +69,53 @@ class TestCreateWakewordBackend:
             create_wakeword_backend(
                 backend="wekws",
                 name="test",
+            )
+
+    def test_factory_creates_sherpa_onnx(self):
+        """Verify SherpaONNXBackend creation."""
+        with patch(
+            "cc_stt.wakeword.factory.SherpaONNXBackend"
+        ) as mock_backend_class:
+            mock_instance = MagicMock(spec=SherpaONNXBackend)
+            mock_backend_class.return_value = mock_instance
+
+            result = create_wakeword_backend(
+                backend="sherpa-onnx",
+                name="my_wakeword",
+                model_dir="/path/to/model",
+                keywords=["hello", "world"],
+                num_threads=8,
+                provider="cuda",
+            )
+
+            mock_backend_class.assert_called_once_with(
+                model_dir="/path/to/model",
+                keywords=["hello", "world"],
+                keywords_file=None,
+                num_threads=8,
+                provider="cuda",
+            )
+            assert result == mock_instance
+
+    def test_factory_sherpa_onnx_without_model_dir(self):
+        """Verify error when model_dir missing for sherpa-onnx backend."""
+        with pytest.raises(
+            ValueError, match="model_dir is required for 'sherpa-onnx' backend"
+        ):
+            create_wakeword_backend(
+                backend="sherpa-onnx",
+                name="test",
+                keywords=["hello"],
+            )
+
+    def test_factory_sherpa_onnx_without_keywords(self):
+        """Verify error when neither keywords nor keywords_file provided for sherpa-onnx backend."""
+        with pytest.raises(
+            ValueError,
+            match="Either keywords or keywords_file is required for 'sherpa-onnx' backend",
+        ):
+            create_wakeword_backend(
+                backend="sherpa-onnx",
+                name="test",
+                model_dir="/path/to/model",
             )
