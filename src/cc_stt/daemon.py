@@ -1,8 +1,9 @@
+import os
 import sys
 import numpy as np
 import sounddevice as sd
 from cc_stt.config import Config
-from cc_stt.wakeword import WakewordDetector
+from cc_stt.wakeword import create_wakeword_backend
 from cc_stt.recorder import AudioRecorder
 from cc_stt.transcriber import SpeechTranscriber
 from cc_stt.editor import EditorWindow
@@ -18,7 +19,29 @@ def log(msg: str):
 class Daemon:
     def __init__(self, wakeword: str = "alexa"):
         self.config = Config.load()
-        self.wakeword = WakewordDetector(wakeword=wakeword)
+
+        # Read config
+        wakeword_name = getattr(self.config.wakeword, 'name', wakeword)
+        threshold = self.config.wakeword.threshold
+        backend = getattr(self.config.wakeword, 'backend', 'openwakeword')
+
+        # Use factory
+        if backend == "wekws":
+            model_path = self.config.wakeword.model_path or "~/.local/share/cc-stt/models/wekws/kws_zh.onnx"
+            model_path = os.path.expanduser(model_path)
+            self.wakeword = create_wakeword_backend(
+                backend="wekws",
+                name=wakeword_name,
+                threshold=threshold,
+                model_path=model_path,
+                window_size=self.config.wakeword.window_size,
+            )
+        else:
+            self.wakeword = create_wakeword_backend(
+                backend="openwakeword",
+                name=wakeword_name,
+                threshold=threshold,
+            )
         self.recorder = AudioRecorder(
             sample_rate=self.config.audio.sample_rate,
             channels=self.config.audio.channels
