@@ -36,6 +36,24 @@ class Daemon:
                 model_path=model_path,
                 window_size=self.config.wakeword.window_size,
             )
+        elif backend == "sherpa-onnx":
+            model_dir = self.config.wakeword.sherpa_model_dir
+            if not model_dir:
+                model_dir = "~/.local/share/cc-stt/models/sherpa-kws/sherpa-onnx-kws-zipformer-wenetspeech-3.3M"
+            model_dir = os.path.expanduser(model_dir)
+
+            # Auto-download if needed
+            from cc_stt.models.sherpa_kws import ensure_model_exists
+            model_dir = ensure_model_exists(model_dir)
+
+            self.wakeword = create_wakeword_backend(
+                backend="sherpa-onnx",
+                name=wakeword_name,
+                model_dir=model_dir,
+                keywords=self.config.wakeword.sherpa_keywords,
+                keywords_file=self.config.wakeword.sherpa_keywords_file,
+                num_threads=self.config.wakeword.sherpa_num_threads,
+            )
         else:
             self.wakeword = create_wakeword_backend(
                 backend="openwakeword",
