@@ -90,3 +90,28 @@ def test_config_load_with_wakeword_values(tmp_path):
     assert config.wakeword.gain == 3.0
     assert config.wakeword.model_path == "/models/wekws.onnx"
     assert config.wakeword.window_size == 45
+
+
+def test_sherpa_onnx_config_defaults():
+    """Verify Sherpa-ONNX config defaults"""
+    config = WakewordConfig()
+    assert config.sherpa_model_dir is None
+    assert config.sherpa_keywords is None
+    assert config.sherpa_keywords_file is None
+    assert config.sherpa_num_threads == 4
+
+
+def test_sherpa_onnx_config_custom_values():
+    """Test Sherpa-ONNX config with custom values"""
+    config = WakewordConfig(
+        backend="sherpa-onnx",
+        sherpa_model_dir="/models/sherpa",
+        sherpa_keywords=["hey computer", "ok device"],
+        sherpa_keywords_file="/config/keywords.txt",
+        sherpa_num_threads=8
+    )
+    assert config.backend == "sherpa-onnx"
+    assert config.sherpa_model_dir == "/models/sherpa"
+    assert config.sherpa_keywords == ["hey computer", "ok device"]
+    assert config.sherpa_keywords_file == "/config/keywords.txt"
+    assert config.sherpa_num_threads == 8

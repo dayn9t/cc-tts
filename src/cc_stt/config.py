@@ -18,7 +18,7 @@ class ModelConfig:
 @dataclass
 class WakewordConfig:
     # Backend selection
-    backend: Literal["openwakeword", "wekws"] = "openwakeword"
+    backend: Literal["openwakeword", "wekws", "sherpa-onnx"] = "openwakeword"
 
     # Common settings
     name: str = "alexa"
@@ -28,6 +28,12 @@ class WakewordConfig:
     # WeKWS-specific settings
     model_path: str | None = None
     window_size: int = 40
+
+    # Sherpa-ONNX-specific settings
+    sherpa_model_dir: str | None = None
+    sherpa_keywords: list[str] | None = None
+    sherpa_keywords_file: str | None = None
+    sherpa_num_threads: int = 4
 
 @dataclass
 class Config:
@@ -64,6 +70,10 @@ class Config:
                     "gain": config.wakeword.gain,
                     "model_path": config.wakeword.model_path,
                     "window_size": config.wakeword.window_size,
+                    "sherpa_model_dir": config.wakeword.sherpa_model_dir,
+                    "sherpa_keywords": config.wakeword.sherpa_keywords,
+                    "sherpa_keywords_file": config.wakeword.sherpa_keywords_file,
+                    "sherpa_num_threads": config.wakeword.sherpa_num_threads,
                 },
                 "hotwords": {"file": config.hotwords_file}
             }, indent=2))
