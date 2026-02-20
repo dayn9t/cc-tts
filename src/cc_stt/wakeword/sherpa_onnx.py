@@ -1,6 +1,7 @@
 """Sherpa-ONNX backend implementation for wakeword detection."""
 
 import os
+import sys
 import tempfile
 import time
 from typing import List
@@ -12,6 +13,11 @@ try:
     from sherpa_onnx import KeywordSpotter
 except ImportError:
     KeywordSpotter = None  # type: ignore
+
+
+def _debug(msg: str):
+    """Print debug message to stderr."""
+    print(f"[SherpaONNX] {msg}", file=sys.stderr, flush=True)
 
 
 class SherpaONNXBackend:
@@ -182,35 +188,50 @@ class SherpaONNXBackend:
         Returns:
             True if wakeword was detected in this frame, False otherwise.
         """
+        _debug(f"process_audio called: shape={audio.shape}, dtype={audio.dtype}, "
+               f"min={audio.min():.4f}, max={audio.max():.4f}, mean={audio.mean():.4f}")
+
         # Rate limiting to prevent CPU spike
         current_time = time.time()
         elapsed = current_time - self._last_process_time
         if elapsed < self._min_process_interval:
+            _debug(f"Rate limited: elapsed={elapsed:.4f}s < min_interval={self._min_process_interval}")
             return False
         self._last_process_time = current_time
 
         # Ensure audio is float32
         if audio.dtype != np.float32:
+            _debug(f"Converting audio from {audio.dtype} to float32")
             audio = audio.astype(np.float32)
 
         # Create stream if not exists
         if self._stream is None:
+            _debug("Creating new stream")
             self._stream = self._spotter.create_stream()
+            _debug("Stream created")
 
         # Accept waveform
+        _debug(f"Accepting waveform: {len(audio)} samples @ 16kHz")
         self._stream.accept_waveform(16000, audio)
 
         # Process if ready (single step, no loop to prevent CPU spike)
-        if self._spotter.is_ready(self._stream):
+        is_ready = self._spotter.is_ready(self._stream)
+        _debug(f"is_ready: {is_ready}")
+        if is_ready:
+            _debug("Decoding stream...")
             self._spotter.decode_stream(self._stream)
+            _debug("Decode complete")
 
         # Check for keyword detections
         result = self._spotter.get_result(self._stream)
+        _debug(f"get_result: {result}, type: {type(result)}, bool: {bool(result)}")
         if result:
+            _debug(f"*** WAKEWORD DETECTED! ***")
             # Reset after detection
             self.reset()
             return True
 
+        _debug("No detection")
         return False
 
     def reset(self) -> None:
