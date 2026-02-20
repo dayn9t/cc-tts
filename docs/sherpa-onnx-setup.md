@@ -41,3 +41,31 @@ uv run cc-stt-daemon
 
 - 你好军哥、小爱同学、小艺小艺、小米小米
 - 蛋哥蛋哥、你好问问、林美丽、你好西西
+
+## 自定义唤醒词
+
+创建自定义关键词文件（例如 `~/.config/cc-stt/keywords_xiaogou.txt`）：
+
+```
+x iǎo g ǒu x iǎo g ǒu @小狗小狗
+```
+
+格式说明：拼音序列 + `@` + 中文显示名
+
+拼音对照：
+- `x` = 声母 x
+- `iǎo` = 韵母 iao（第三声）
+- `g` = 声母 g
+- `ǒu` = 韵母 ou（第三声）
+
+更新 `config.json`：
+
+```json
+{
+  "wakeword": {
+    "backend": "sherpa-onnx",
+    "name": "小狗小狗",
+    "sherpa_keywords_file": "~/.config/cc-stt/keywords_xiaogou.txt"
+  }
+}
+```
