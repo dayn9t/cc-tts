@@ -67,6 +67,7 @@ def create_wakeword_backend(
             keywords_file=keywords_file,
             num_threads=num_threads,
             provider=provider,
+            name=name,
         )
     else:
         raise ValueError(f"Unknown backend: {backend}")

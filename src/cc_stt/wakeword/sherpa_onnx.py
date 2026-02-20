@@ -40,6 +40,7 @@ class SherpaONNXBackend:
         keywords_file: str | None = None,
         num_threads: int = 4,
         provider: str = "cpu",
+        name: str = "sherpa-onnx-kws",
     ):
         """Initialize the Sherpa-ONNX backend.
 
@@ -51,13 +52,14 @@ class SherpaONNXBackend:
                 keywords_file must be provided.
             num_threads: Number of threads for ONNX Runtime.
             provider: ONNX Runtime provider ("cpu" or "cuda").
+            name: Display name for the wake word (e.g., "小狗小狗").
 
         Raises:
             FileNotFoundError: If required model files are missing.
             ValueError: If neither keywords nor keywords_file is provided.
             RuntimeError: If sherpa_onnx is not installed.
         """
-        self.wakeword = "sherpa-onnx-kws"  # Display name for daemon
+        self.wakeword = name  # Display name for daemon
         self.model_dir = model_dir
         self.num_threads = num_threads
         self.provider = provider
