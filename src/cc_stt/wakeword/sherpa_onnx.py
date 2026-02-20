@@ -119,8 +119,8 @@ class SherpaONNXBackend:
             matched = None
             for filename in dir_files:
                 if fnmatch.fnmatch(filename, pattern):
-                    # Prefer non-int8 version if available
-                    if ".int8." not in filename:
+                    # Prefer int8 version for lower memory usage
+                    if ".int8." in filename:
                         matched = filename
                         break
                     elif matched is None:
