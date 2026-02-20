@@ -1,8 +1,9 @@
 """Tests for SherpaONNX backend implementation."""
 
+import os
 import numpy as np
 import pytest
-from unittest.mock import Mock, patch, MagicMock, mock_open
+from unittest.mock import Mock, patch, MagicMock
 
 
 class TestSherpaONNXBackend:
@@ -47,10 +48,15 @@ class TestSherpaONNXBackend:
         mock_spotter = MagicMock()
         mock_spotter_class.return_value = mock_spotter
 
+        # Mock stream and methods
+        mock_stream = MagicMock()
+        mock_spotter.create_stream.return_value = mock_stream
+        mock_spotter.is_ready.return_value = False  # Prevent infinite loop
+
         # Mock empty result (no detection)
         mock_result = MagicMock()
         mock_result.__iter__ = Mock(return_value=iter([]))
-        mock_spotter.return_value = mock_result
+        mock_spotter.get_result.return_value = mock_result
 
         backend = SherpaONNXBackend(
             model_dir="/path/to/model",
@@ -62,7 +68,7 @@ class TestSherpaONNXBackend:
         result = backend.process_audio(audio)
 
         assert result is False
-        mock_spotter.assert_called_once()
+        mock_spotter.create_stream.assert_called_once()
 
     @patch("cc_stt.wakeword.sherpa_onnx.KeywordSpotter")
     @patch("cc_stt.wakeword.sherpa_onnx.os.path.exists")
@@ -77,13 +83,18 @@ class TestSherpaONNXBackend:
         mock_spotter = MagicMock()
         mock_spotter_class.return_value = mock_spotter
 
+        # Mock stream and methods
+        mock_stream = MagicMock()
+        mock_spotter.create_stream.return_value = mock_stream
+        mock_spotter.is_ready.return_value = False  # Process once then stop
+
         # Mock result with detection
         mock_detection = MagicMock()
         mock_detection.keyword = "hello"
         mock_detection.score = 0.95
         mock_result = MagicMock()
         mock_result.__iter__ = Mock(return_value=iter([mock_detection]))
-        mock_spotter.return_value = mock_result
+        mock_spotter.get_result.return_value = mock_result
 
         backend = SherpaONNXBackend(
             model_dir="/path/to/model",
@@ -114,13 +125,18 @@ class TestSherpaONNXBackend:
             keywords=["hello"],
         )
 
+        # Create a stream first
+        mock_stream = MagicMock()
+        backend._stream = mock_stream
+
         # Reset should call the spotter's reset method
         backend.reset()
 
-        mock_spotter.reset.assert_called_once()
+        mock_spotter.reset.assert_called_once_with(mock_stream)
 
+    @patch("cc_stt.wakeword.sherpa_onnx.KeywordSpotter")
     @patch("cc_stt.wakeword.sherpa_onnx.os.path.exists")
-    def test_sherpa_onnx_missing_model_files(self, mock_exists):
+    def test_sherpa_onnx_missing_model_files(self, mock_exists, mock_spotter_class):
         """Test that missing model files raises error."""
         from cc_stt.wakeword.sherpa_onnx import SherpaONNXBackend
 
@@ -135,10 +151,7 @@ class TestSherpaONNXBackend:
 
     @patch("cc_stt.wakeword.sherpa_onnx.KeywordSpotter")
     @patch("cc_stt.wakeword.sherpa_onnx.os.path.exists")
-    @patch("builtins.open", new_callable=mock_open)
-    def test_sherpa_onnx_keywords_file_creation(
-        self, mock_file, mock_exists, mock_spotter_class
-    ):
+    def test_sherpa_onnx_keywords_file_creation(self, mock_exists, mock_spotter_class):
         """Test that keywords file is created from list."""
         from cc_stt.wakeword.sherpa_onnx import SherpaONNXBackend
 
@@ -154,12 +167,15 @@ class TestSherpaONNXBackend:
             keywords=["hello", "world"],
         )
 
-        # Verify keywords file was written
-        mock_file.assert_called()
-        handle = mock_file()
-        written_content = handle.write.call_args[0][0]
-        assert "hello" in written_content
-        assert "world" in written_content
+        # Verify keywords file was created (stored in _temp_keywords_file)
+        assert backend._temp_keywords_file is not None
+        assert os.path.exists(backend._temp_keywords_file)
+
+        # Verify file content
+        with open(backend._temp_keywords_file) as f:
+            content = f.read()
+            assert "hello : boost=1.0" in content
+            assert "world : boost=1.0" in content
 
     @patch("cc_stt.wakeword.sherpa_onnx.KeywordSpotter")
     @patch("cc_stt.wakeword.sherpa_onnx.os.path.exists")
