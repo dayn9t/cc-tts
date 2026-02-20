@@ -57,6 +57,7 @@ class SherpaONNXBackend:
             ValueError: If neither keywords nor keywords_file is provided.
             RuntimeError: If sherpa_onnx is not installed.
         """
+        self.wakeword = "sherpa-onnx-kws"  # Display name for daemon
         self.model_dir = model_dir
         self.num_threads = num_threads
         self.provider = provider
