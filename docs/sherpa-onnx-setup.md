@@ -65,7 +65,64 @@ x iǎo g ǒu x iǎo g ǒu @小狗小狗
   "wakeword": {
     "backend": "sherpa-onnx",
     "name": "小狗小狗",
+    "gain": 3.0,
     "sherpa_keywords_file": "~/.config/cc-stt/keywords_xiaogou.txt"
+  }
+}
+```
+
+## 灵敏度调节
+
+### 方法 1: 调整 boost 值（推荐）
+
+在关键词文件中调整 `boost` 值（1.0-10.0，值越大越敏感）：
+
+```
+x iǎo g ǒu x iǎo g ǒu @小狗小狗 : boost=4.0
+```
+
+- `boost=1.0` - 低灵敏度，误报少
+- `boost=4.0` - 中等灵敏度（推荐）
+- `boost=8.0` - 高灵敏度，容易唤醒但误报多
+
+### 方法 2: 调整音频增益
+
+在 `config.json` 中增大 `gain` 值：
+
+```json
+{
+  "wakeword": {
+    "gain": 3.0
+  }
+}
+```
+
+- `gain=1.0` - 标准音量
+- `gain=2.0` - 双倍音量（默认）
+- `gain=3.0` - 三倍音量（更远距离唤醒）
+
+### 方法 3: 选择更好的唤醒词
+
+效果较好的唤醒词（模型训练数据更多）：
+
+| 唤醒词 | 效果 | 说明 |
+|--------|------|------|
+| **小爱同学** | ⭐⭐⭐⭐⭐ | 识别率最高，推荐 |
+| **小艺小艺** | ⭐⭐⭐⭐⭐ | 识别率高，推荐 |
+| **小米小米** | ⭐⭐⭐⭐ | 识别率较高 |
+| **你好军哥** | ⭐⭐⭐⭐ | 识别率较高 |
+| **小狗小狗** | ⭐⭐⭐ | 需要调大 boost |
+
+### 推荐配置（高灵敏度）
+
+```json
+{
+  "wakeword": {
+    "backend": "sherpa-onnx",
+    "name": "小爱同学",
+    "gain": 3.0,
+    "sherpa_keywords_file": "models/sherpa_kws/sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01/keywords.txt",
+    "sherpa_num_threads": 1
   }
 }
 ```
