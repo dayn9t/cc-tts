@@ -3,13 +3,14 @@ from cc_stt.config import Config
 from cc_stt.hotwords import HotwordsManager
 from cc_stt.recorder import AudioRecorder
 from cc_stt.transcriber import SpeechTranscriber
-from cc_stt.wakeword import WakewordDetector
+from cc_stt.wakeword import create_wakeword_backend, OpenWakeWordBackend
 
 tkinter = pytest.importorskip("tkinter", reason="tkinter not available (headless environment)")
 
 from cc_stt.voice_edit import VoiceEditor
 from cc_stt.sender import Sender
 from cc_stt.daemon import Daemon
+
 
 def test_full_pipeline_components(tmp_path):
     """Test all components can be initialized together"""
@@ -86,10 +87,40 @@ def test_sender_initialization():
     assert sender is not None
 
 
-def test_wakeword_detector_initialization():
-    """Test WakewordDetector can be initialized"""
-    detector = WakewordDetector(wakeword="alexa")
-    assert detector.wakeword == "alexa"
-    assert detector.models is not None
+@pytest.mark.parametrize("backend_type", ["openwakeword"])
+def test_wakeword_backend_factory(backend_type):
+    """Test wakeword backend factory creates backends correctly."""
+    from unittest.mock import patch, MagicMock
+
+    with patch("cc_stt.wakeword.factory.OpenWakeWordBackend") as mock_backend_class:
+        mock_backend = MagicMock()
+        mock_backend_class.return_value = mock_backend
+
+        if backend_type == "openwakeword":
+            backend = create_wakeword_backend(
+                backend=backend_type,
+                name="alexa",
+            )
+            mock_backend_class.assert_called_once_with(
+                wakeword="alexa",
+                threshold=0.5,
+            )
 
 
+def test_openwakeword_backend_initialization():
+    """Test OpenWakeWordBackend can be initialized"""
+    from unittest.mock import patch, MagicMock
+
+    with patch("cc_stt.wakeword.openwakeword.openwakeword.get_pretrained_model_paths") as mock_get_paths:
+        with patch("cc_stt.wakeword.openwakeword.Model") as mock_model_class:
+            mock_get_paths.return_value = ["/path/to/alexa_v0.1.onnx"]
+            mock_model = MagicMock()
+            mock_model.models = {"alexa_v0.1": MagicMock()}
+            mock_model_class.return_value = mock_model
+
+            backend = OpenWakeWordBackend(
+                wakeword="alexa",
+                threshold=0.5,
+            )
+            assert backend.wakeword == "alexa"
+            assert backend.threshold == 0.5

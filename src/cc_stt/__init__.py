@@ -1,8 +1,8 @@
 import asyncio
-from .server import main
 
 def cli():
     """CLI entry point for MCP server"""
+    from .server import main
     asyncio.run(main())
 
 def daemon_cli():
@@ -10,4 +10,4 @@ def daemon_cli():
     from .daemon import main as daemon_main
     daemon_main()
 
-__all__ = ["cli", "daemon_cli", "main"]
+__all__ = ["cli", "daemon_cli"]
