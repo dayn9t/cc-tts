@@ -93,14 +93,18 @@ class Daemon:
 
     def _audio_callback(self, indata, frames, time, status):
         """音频流回调"""
-        if status:
-            log(f"[AudioCallback] Status: {status}")
-        audio = indata[:, 0].astype(np.float32) * self.audio_gain
-        log(f"[AudioCallback] frames={frames}, audio_len={len(audio)}, gain={self.audio_gain}")
-        result = self.wakeword.process_audio(audio)
-        log(f"[AudioCallback] process_audio returned: {result}")
-        if result:
-            log("[AudioCallback] *** WAKEWORD TRIGGERED ***")
+        # Convert to float32 and apply gain
+        audio = indata[:, 0].astype(np.float32)
+
+        # Normalize if needed (prevent clipping)
+        max_val = np.abs(audio).max()
+        if max_val > 0:
+            audio = audio / max_val * 0.9  # Normalize to 90% to avoid clipping
+
+        # Apply gain with clipping protection
+        audio = np.clip(audio * self.audio_gain, -1.0, 1.0)
+
+        if self.wakeword.process_audio(audio):
             raise sd.CallbackStop()
 
     def run(self):

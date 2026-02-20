@@ -188,14 +188,19 @@ class SherpaONNXBackend:
         Returns:
             True if wakeword was detected in this frame, False otherwise.
         """
-        _debug(f"process_audio called: shape={audio.shape}, dtype={audio.dtype}, "
-               f"min={audio.min():.4f}, max={audio.max():.4f}, mean={audio.mean():.4f}")
+        # Only log significant audio levels (every 50 calls to avoid spam)
+        audio_level = np.abs(audio).mean()
+        if audio_level > 0.01 and not hasattr(self, '_call_count'):
+            self._call_count = 0
+        if hasattr(self, '_call_count'):
+            self._call_count += 1
+            if self._call_count % 50 == 0:
+                _debug(f"Audio level: {audio_level:.4f}, processing...")
 
         # Rate limiting to prevent CPU spike
         current_time = time.time()
         elapsed = current_time - self._last_process_time
         if elapsed < self._min_process_interval:
-            _debug(f"Rate limited: elapsed={elapsed:.4f}s < min_interval={self._min_process_interval}")
             return False
         self._last_process_time = current_time
 
@@ -206,32 +211,23 @@ class SherpaONNXBackend:
 
         # Create stream if not exists
         if self._stream is None:
-            _debug("Creating new stream")
             self._stream = self._spotter.create_stream()
-            _debug("Stream created")
 
         # Accept waveform
-        _debug(f"Accepting waveform: {len(audio)} samples @ 16kHz")
         self._stream.accept_waveform(16000, audio)
 
         # Process if ready (single step, no loop to prevent CPU spike)
-        is_ready = self._spotter.is_ready(self._stream)
-        _debug(f"is_ready: {is_ready}")
-        if is_ready:
-            _debug("Decoding stream...")
+        if self._spotter.is_ready(self._stream):
             self._spotter.decode_stream(self._stream)
-            _debug("Decode complete")
 
         # Check for keyword detections
         result = self._spotter.get_result(self._stream)
-        _debug(f"get_result: {result}, type: {type(result)}, bool: {bool(result)}")
         if result:
-            _debug(f"*** WAKEWORD DETECTED! ***")
+            _debug(f"*** WAKEWORD DETECTED: {result} ***")
             # Reset after detection
             self.reset()
             return True
 
-        _debug("No detection")
         return False
 
     def reset(self) -> None:
