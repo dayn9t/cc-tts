@@ -93,7 +93,7 @@ class Daemon:
 
     def _audio_callback(self, indata, frames, time, status):
         """音频流回调"""
-        audio = indata[:, 0].astype(np.float32)
+        audio = indata[:, 0].astype(np.float32) * self.audio_gain
         if self.wakeword.process_audio(audio):
             raise sd.CallbackStop()
 
@@ -109,7 +109,8 @@ class Daemon:
                     samplerate=self.config.audio.sample_rate,
                     channels=self.config.audio.channels,
                     callback=self._audio_callback,
-                    blocksize=1280
+                    blocksize=5120,  # 320ms chunks for better performance
+                    latency='low'
                 ):
                     sd.sleep(int(3600 * 1000))  # 持续监听
             except sd.CallbackStop:

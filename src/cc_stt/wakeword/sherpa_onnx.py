@@ -190,9 +190,12 @@ class SherpaONNXBackend:
         # Accept waveform
         self._stream.accept_waveform(16000, audio)
 
-        # Process and check for detections
-        while self._spotter.is_ready(self._stream):
+        # Process and check for detections (limit iterations to prevent CPU spike)
+        max_iterations = 10
+        iterations = 0
+        while self._spotter.is_ready(self._stream) and iterations < max_iterations:
             self._spotter.decode_stream(self._stream)
+            iterations += 1
 
         # Check for keyword detections
         result = self._spotter.get_result(self._stream)
