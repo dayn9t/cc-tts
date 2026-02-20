@@ -42,6 +42,11 @@ class Daemon:
                 model_dir = "~/.local/share/cc-stt/models/sherpa-kws/sherpa-onnx-kws-zipformer-wenetspeech-3.3M"
             model_dir = os.path.expanduser(model_dir)
 
+            # Expand keywords_file path if provided
+            keywords_file = self.config.wakeword.sherpa_keywords_file
+            if keywords_file:
+                keywords_file = os.path.expanduser(keywords_file)
+
             # Auto-download if needed
             from cc_stt.models.sherpa_kws import ensure_model_exists
             model_dir = ensure_model_exists(model_dir)
@@ -51,7 +56,7 @@ class Daemon:
                 name=wakeword_name,
                 model_dir=model_dir,
                 keywords=self.config.wakeword.sherpa_keywords,
-                keywords_file=self.config.wakeword.sherpa_keywords_file,
+                keywords_file=keywords_file,
                 num_threads=self.config.wakeword.sherpa_num_threads,
             )
         else:
