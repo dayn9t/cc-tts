@@ -18,6 +18,8 @@ dependencies = [
     "torch>=2.10.0",
     "torchaudio>=2.10.0",
     "openwakeword==0.4.0",
+    "sherpa-onnx>=1.12.25",
+    "onnxruntime==1.23.2",
 ]
 
 [tool.uv]

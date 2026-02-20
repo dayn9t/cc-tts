@@ -26,7 +26,12 @@ class SherpaONNXBackend:
         - tokens.txt: Token list
     """
 
-    REQUIRED_FILES = ["encoder.onnx", "decoder.onnx", "joiner.onnx", "tokens.txt"]
+    REQUIRED_PATTERNS = {
+        "encoder": "encoder*.onnx",
+        "decoder": "decoder*.onnx",
+        "joiner": "joiner*.onnx",
+        "tokens": "tokens.txt",
+    }
 
     def __init__(
         self,
@@ -56,6 +61,7 @@ class SherpaONNXBackend:
         self.num_threads = num_threads
         self.provider = provider
         self._temp_keywords_file: str | None = None
+        self._model_files: dict[str, str] = {}
 
         # Check if sherpa_onnx is available
         if KeywordSpotter is None:
@@ -64,8 +70,8 @@ class SherpaONNXBackend:
                 "Install it with: pip install sherpa-onnx"
             )
 
-        # Validate model files exist
-        self._check_model_files()
+        # Validate model files exist and find paths
+        self._model_files = self._find_model_files()
 
         # Determine keywords file path
         if keywords_file:
@@ -80,19 +86,43 @@ class SherpaONNXBackend:
         self._spotter = self._create_spotter()
         self._stream = None
 
-    def _check_model_files(self) -> None:
-        """Check that all required model files exist.
+    def _find_model_files(self) -> dict[str, str]:
+        """Find required model files in model_dir.
+
+        Supports pattern matching for models with version numbers
+        (e.g., encoder-epoch-12-avg-2-chunk-16-left-64.onnx).
+
+        Returns:
+            Dictionary mapping file type to full path.
 
         Raises:
             FileNotFoundError: If any required file is missing.
         """
-        for filename in self.REQUIRED_FILES:
-            filepath = os.path.join(self.model_dir, filename)
-            if not os.path.exists(filepath):
+        import fnmatch
+
+        model_files = {}
+        dir_files = os.listdir(self.model_dir)
+
+        for file_type, pattern in self.REQUIRED_PATTERNS.items():
+            matched = None
+            for filename in dir_files:
+                if fnmatch.fnmatch(filename, pattern):
+                    # Prefer non-int8 version if available
+                    if ".int8." not in filename:
+                        matched = filename
+                        break
+                    elif matched is None:
+                        matched = filename
+
+            if matched is None:
                 raise FileNotFoundError(
-                    f"Model file not found: {filepath}. "
-                    f"Required files: {self.REQUIRED_FILES}"
+                    f"Model file not found for pattern: {pattern}. "
+                    f"Required patterns: {self.REQUIRED_PATTERNS}"
                 )
+
+            model_files[file_type] = os.path.join(self.model_dir, matched)
+
+        return model_files
 
     def _create_keywords_file(self, keywords: List[str]) -> str:
         """Create a temporary keywords file from a list of keywords.
@@ -125,16 +155,11 @@ class SherpaONNXBackend:
         Returns:
             Configured KeywordSpotter instance.
         """
-        encoder_path = os.path.join(self.model_dir, "encoder.onnx")
-        decoder_path = os.path.join(self.model_dir, "decoder.onnx")
-        joiner_path = os.path.join(self.model_dir, "joiner.onnx")
-        tokens_path = os.path.join(self.model_dir, "tokens.txt")
-
         spotter = KeywordSpotter(
-            tokens=tokens_path,
-            encoder=encoder_path,
-            decoder=decoder_path,
-            joiner=joiner_path,
+            tokens=self._model_files["tokens"],
+            encoder=self._model_files["encoder"],
+            decoder=self._model_files["decoder"],
+            joiner=self._model_files["joiner"],
             num_threads=self.num_threads,
             provider=self.provider,
             keywords_file=self.keywords_file,
@@ -183,7 +208,7 @@ class SherpaONNXBackend:
         after a wakeword has been detected and processed.
         """
         if self._stream is not None:
-            self._spotter.reset(self._stream)
+            self._spotter.reset_stream(self._stream)
             self._stream = None
 
     def __del__(self):

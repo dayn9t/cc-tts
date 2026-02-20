@@ -11,3 +11,9 @@ wheels/
 
 # Git worktrees
 .worktrees/
+
+# Model files (downloaded separately)
+*.onnx
+*.tar.bz2
+models/sherpa_kws/sherpa-onnx-*/
+test_chinese_wakeword.py
