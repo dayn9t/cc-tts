@@ -33,7 +33,7 @@ class WakewordConfig:
     sherpa_model_dir: str | None = None
     sherpa_keywords: list[str] | None = None
     sherpa_keywords_file: str | None = None
-    sherpa_num_threads: int = 4
+    sherpa_num_threads: int = 1
 
 @dataclass
 class Config:

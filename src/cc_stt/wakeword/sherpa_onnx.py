@@ -2,6 +2,7 @@
 
 import os
 import tempfile
+import time
 from typing import List
 
 import numpy as np
@@ -65,6 +66,8 @@ class SherpaONNXBackend:
         self.provider = provider
         self._temp_keywords_file: str | None = None
         self._model_files: dict[str, str] = {}
+        self._last_process_time: float = 0.0
+        self._min_process_interval: float = 0.02  # 50Hz max
 
         # Check if sherpa_onnx is available
         if KeywordSpotter is None:
@@ -179,6 +182,13 @@ class SherpaONNXBackend:
         Returns:
             True if wakeword was detected in this frame, False otherwise.
         """
+        # Rate limiting to prevent CPU spike
+        current_time = time.time()
+        elapsed = current_time - self._last_process_time
+        if elapsed < self._min_process_interval:
+            return False
+        self._last_process_time = current_time
+
         # Ensure audio is float32
         if audio.dtype != np.float32:
             audio = audio.astype(np.float32)
@@ -190,20 +200,16 @@ class SherpaONNXBackend:
         # Accept waveform
         self._stream.accept_waveform(16000, audio)
 
-        # Process and check for detections (limit iterations to prevent CPU spike)
-        max_iterations = 10
-        iterations = 0
-        while self._spotter.is_ready(self._stream) and iterations < max_iterations:
+        # Process if ready (single step, no loop to prevent CPU spike)
+        if self._spotter.is_ready(self._stream):
             self._spotter.decode_stream(self._stream)
-            iterations += 1
 
         # Check for keyword detections
         result = self._spotter.get_result(self._stream)
-        for detection in result:
-            if hasattr(detection, "keyword") and detection.keyword:
-                # Reset after detection
-                self.reset()
-                return True
+        if result:
+            # Reset after detection
+            self.reset()
+            return True
 
         return False
 
